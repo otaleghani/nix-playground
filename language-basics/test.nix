@@ -237,11 +237,44 @@
 
 # Usually you'll find both pkgs and lib called
 # --arg lib '(import <nixpkgs> {}).lib' --arg pkgs 'import <nixpkgs> {}'
-{ pkgs, lib, ...}:
-let 
-  a = lib.strings.removePrefix "a " "a vedi";
-  b = pkgs.lib.strings.toUpper "sandro";
-in
-  [ a b ]
+# { pkgs, lib, ...}:
+# let 
+#   a = lib.strings.removePrefix "a " "a vedi";
+#   b = pkgs.lib.strings.toUpper "sandro";
+# in
+#   [ a b ]
 
 # next: impurities
+# the only kind of impurities we have in the nix language are based on build inputs
+# like files that you use for creating your build
+# paths to files in string interpolation are copied into the /nix/store dir with name <hash>-<name>
+# "${./function.nix}"
+
+# you can of course fetch data from remote server. you can fetchurl and even git or tarballs
+# builtins.fetchurl "https://github.com/NixOS/nix/archive/7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
+
+# Derivation -> a really important concept
+# nix language -- describes -> derivation
+# nix -- runs -> derivations to produce build results
+# build result -- could be used -> to make other derivations
+
+# Usually a derivation in described with the stdenv.mkDerivation function.
+# Whenever you find mkDerivation there is something that nix will eventually build
+# The evaluation result of derivation and mkDerivation is an attribute set that describes the derivation
+# you could use string interpolation to a derivation to get it's Nix Store path
+
+# let
+#   pkgs = import <nixpkgs> {};
+# in 
+#   "${pkgs.nix}"
+
+{ pkgs ? import <nixpkgs> {} }:
+let
+  message = "hello world";
+in
+pkgs.mkShellNoCC {
+  buildInputs = with pkgs; [ cowsay ];
+  shellHook = ''
+    cowsay ${message}
+  '';
+}
