@@ -5,4 +5,5 @@ in
 {
   # callPackage will supply automatically every needed attribute in the declaration set
   hello = pkgs.callPackage ./hello.nix { };
+  icat = pkgs.callPackage ./icat.nix { };
 }
