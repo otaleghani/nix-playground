@@ -10,4 +10,7 @@ let
     inherit system;
   };
 in
-pkgs.callPackage ./build.nix { }
+{
+  first = pkgs.callPackage ./build.nix { };
+  second = pkgs.callPackage ./build2.nix { };
+}
