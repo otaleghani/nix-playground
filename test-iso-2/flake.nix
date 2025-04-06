@@ -1,3 +1,4 @@
+
 {
   description = "Custom NixOS ISO installer with GRUB";
 
@@ -10,30 +11,25 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-      in {
-        packages.isoImage = (pkgs.nixos ({
-          system = "${system}";
+        lib = nixpkgs.lib;
+
+        nixosSystem = lib.nixosSystem {
+          inherit system;
           modules = [
             "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-graphical-plasma5.nix"
 
-            # Use GRUB as bootloader
             ({ config, lib, ... }: {
-              boot.loader.grub.enable = true;
+              boot.loader.grub.enable = lib.mkForce true;  # <-- crucial fix
               boot.loader.grub.efiSupport = true;
               boot.loader.grub.efiInstallAsRemovable = true;
-              boot.loader.grub.device = "nodev"; # Important for ISO
+              boot.loader.grub.device = "nodev";
               boot.loader.grub.useOSProber = true;
 
-              # ISO-related settings
               isoImage.makeEfiBootable = true;
               isoImage.makeUsbBootable = true;
 
-              # Extra packages or customizations (optional)
               environment.systemPackages = with pkgs; [
-                neovim
-                git
-                htop
-                wget
+                vim git htop wget
               ];
 
               services.openssh.enable = true;
@@ -41,8 +37,9 @@
               users.users.nixos.password = "nixos";
             })
           ];
-        })).config.system.build.isoImage;
-
+        };
+      in {
+        packages.isoImage = nixosSystem.config.system.build.isoImage;
         defaultPackage = self.packages.${system}.isoImage;
       });
 }
