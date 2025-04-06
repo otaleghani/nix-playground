@@ -1,32 +1,28 @@
 {
-  description = "NixOS installer ISO with GRUB";
+  description = "NixOS live ISO with custom configuration";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-  };
-
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = import nixpkgs { inherit system; };
-    in {
-      isoImage = pkgs.nixos.isoImage {
-        system = "x86_64-linux";
-        configuration = { config, pkgs, ... }: {
-          # A minimal installer configuration.
-          # Additional imports or configuration can be added here.
-          imports = [ ];
-
-          # Enable GRUB as the bootloader.
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+  
+  outputs = { self, nixpkgs }: {
+    nixosConfigurations.live = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        {
+          # Custom configuration for the live installer ISO
           boot.loader.grub.enable = true;
           boot.loader.grub.device = "nodev";  # Use GRUB without writing to a disk.
+          boot.loader.grub.efiSupport = false;  # Disable EFI support (for legacy BIOS systems).
           
-          # Optionally, disable EFI support if you're targeting legacy systems.
-          boot.loader.grub.efiSupport = false;
+          services.openssh.enable = true;     # Enable SSH for remote access.
 
-          # You can add extra services or settings here if needed.
-          services.openssh.enable = true;
-        };
-      };
-    });
+          # Additional custom settings
+          networking.hostName = "nixos-live";
+          time.timeZone = "UTC";
+
+          # Include extra packages if needed
+          environment.systemPackages = with nixpkgs; [ neovim curl ];
+        }
+      ];
+    };
+  };
 }
